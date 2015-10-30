@@ -2,21 +2,56 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.sknutti.capstoneproject" >
 
+    <uses-permission android:name="android.permission.INTERNET" />
+
     <application
+        android:name=".InterviewSchedulerApp"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/AppTheme" >
         <activity
-            android:name=".MainActivity"
-            android:label="@string/app_name"
-            android:theme="@style/AppTheme.NoActionBar" >
+            android:name=".MonthScheduleActivity"
+            android:label="@string/launcher_name"
+            android:launchMode="singleTask"
+            android:screenOrientation="portrait" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
+        </activity>
+        <activity
+            android:name=".SettingsActivity"
+            android:label="@string/title_activity_settings" >
+        </activity>
+        <activity
+            android:name=".MemberListActivity"
+            android:label="@string/title_activity_member_list"
+            android:theme="@style/AppTheme" >
+        </activity>
+        <activity
+            android:name=".InterviewListActivity"
+            android:label="@string/title_activity_interview_list"
+            android:theme="@style/AppTheme" >
+        </activity>
+
+        <provider
+            android:name=".data.SchedulerProvider"
+            android:authorities="com.sknutti.capstoneproject"
+            android:exported="false" />
+
+        <activity
+            android:name=".AppointmentActivity"
+            android:label="@string/title_activity_appointment"
+            android:theme="@style/AppTheme" >
+        </activity>
+        <activity
+            android:name=".DailyScheduleActivity"
+            android:label="@string/title_activity_daily_schedule"
+            android:theme="@style/AppTheme" >
         </activity>
     </application>
 

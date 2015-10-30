@@ -1,17 +1,53 @@
 <resources>
 
     <!-- Base application theme. -->
-    <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
+    <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
         <!-- Customize your theme here. -->
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
+        <item name="android:colorForeground">@color/foreground_material_light</item>
     </style>
     <style name="AppTheme.NoActionBar">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
+        <!-- Remove the actionbar shadow-->
+        <item name="android:windowContentOverlay">@null</item>
+    </style>
+    <style name="AppTheme.NavigationDrawer">
+        <!--<item name="android:textColor">@color/colorText</item>-->
     </style>
     <style name="AppTheme.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
     <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
+
+    <style name="CaldroidLight" parent="CaldroidDefault">
+        <item name="styleCaldroidViewLayout">@style/CaldroidCalendarViewLayout</item>
+        <item name="styleCaldroidMonthName">@style/CaldroidMonthName</item>
+        <item name="styleCaldroidNormalCell">@style/CaldroidNormalCell</item>
+        <item name="styleCaldroidSquareCell">@style/CaldroidSquareCell</item>
+        <item name="styleCaldroidGridView">@style/CaldroidGridView</item>
+    </style>
+
+    <style name="CaldroidCalendarViewLayout">
+        <!--<item name="android:background">@color/caldroid_white</item>-->
+    </style>
+
+    <style name="CaldroidMonthName" parent="CaldroidDefaultMonthName">
+        <item name="android:textColor">@color/colorPrimaryDark</item>
+    </style>
+
+    <style name="CaldroidGridView" parent="CaldroidDefaultGridView">
+        <item name="android:background">@color/colorLightBackground</item>
+    </style>
+
+    <style name="CaldroidCell" parent="CaldroidDefaultCell">
+        <item name="android:textColor">@color/colorTextNoAppts</item>
+    </style>
+
+    <style name="CaldroidNormalCell" parent="CaldroidCell">
+        <item name="android:padding">5dp</item>
+    </style>
+
+    <style name="CaldroidSquareCell" parent="CaldroidCell" />
 
 </resources>
