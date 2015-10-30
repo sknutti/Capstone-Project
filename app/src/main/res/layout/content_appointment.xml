@@ -1,10 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:paddingTop="16dp"
+    android:paddingBottom="16dp"
+    android:paddingLeft="8dp"
+    android:paddingRight="8dp"
     android:layout_marginTop="?attr/actionBarSize">
-
 
     <TextView
         android:id="@+id/appointment_id"
@@ -24,14 +27,17 @@
         android:layout_marginLeft="4dp"
         android:layout_marginRight="4dp"
         android:layout_marginBottom="4dp"
-        android:layout_gravity="center_horizontal"
+        android:layout_centerHorizontal="true"
         android:spinnerMode="dialog"
         android:prompt="@string/appointment_member" />
     <TextView
         android:id="@+id/appointment_meeting_with"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:gravity="center_horizontal"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="8dp"
+        android:layout_centerHorizontal="true"
+        android:layout_below="@+id/appointment_name_spinner"
         android:text="@string/member_meeting_with"/>
     <Spinner
         android:id="@+id/appointment_interviewer_spinner"
@@ -42,71 +48,79 @@
         android:layout_marginLeft="4dp"
         android:layout_marginRight="4dp"
         android:layout_marginBottom="4dp"
-        android:layout_gravity="center_horizontal"
+        android:layout_centerHorizontal="true"
+        android:layout_below="@+id/appointment_meeting_with"
         android:hint="@string/appointment_interviewer" />
     <TextView
         android:id="@+id/appointment_meeting_on"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="center_horizontal"
-        android:text="@string/member_meeting_on"/>
-    <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
-        android:orientation="horizontal">
-        <TextView
-            android:id="@+id/appointment_date"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:layout_marginLeft="4dp"
-            android:layout_marginRight="4dp"
-            android:layout_marginBottom="16dp"
-            android:textColor="@color/colorTextDark"
-            android:hint="@string/appointment_date"/>
-        <TextView
-            android:id="@+id/appointment_meeting_at_symbol"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginLeft="4dp"
-            android:layout_marginRight="4dp"
-            android:gravity="center_horizontal"
-            android:text="@string/member_meeting_at_symbol"/>
-        <TextView
-            android:id="@+id/appointment_time"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:layout_marginLeft="4dp"
-            android:layout_marginRight="4dp"
-            android:layout_marginBottom="16dp"
-            android:textColor="@color/colorTextDark"
-            android:hint="@string/appointment_time"/>
-    </LinearLayout>
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="8dp"
+        android:layout_centerHorizontal="true"
+        android:layout_below="@+id/appointment_interviewer_spinner"
+        android:text="@string/member_meeting_on"/>
+
+    <TextView
+        android:id="@+id/appointment_date"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:layout_marginLeft="4dp"
+        android:layout_marginRight="4dp"
+        android:layout_marginBottom="16dp"
+        android:layout_below="@+id/appointment_meeting_on"
+        android:layout_toLeftOf="@+id/appointment_meeting_at_symbol"
+        android:layout_toStartOf="@+id/appointment_meeting_at_symbol"
+        android:textColor="@color/colorTextDark"
+        android:hint="@string/appointment_date"/>
+    <TextView
+        android:id="@+id/appointment_meeting_at_symbol"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="4dp"
+        android:layout_marginRight="4dp"
+        android:layout_centerHorizontal="true"
+        android:layout_below="@+id/appointment_meeting_on"
+        android:text="@string/member_meeting_at_symbol"/>
+    <TextView
+        android:id="@+id/appointment_time"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:layout_marginLeft="4dp"
+        android:layout_marginRight="4dp"
+        android:layout_marginBottom="16dp"
+        android:layout_below="@+id/appointment_meeting_on"
+        android:layout_toRightOf="@+id/appointment_meeting_at_symbol"
+        android:layout_toEndOf="@+id/appointment_meeting_at_symbol"
+        android:textColor="@color/colorTextDark"
+        android:hint="@string/appointment_time"/>
+
     <TextView
         android:id="@+id/appointment_meeting_at"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:gravity="center_horizontal"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="8dp"
+        android:layout_centerHorizontal="true"
+        android:layout_below="@+id/appointment_meeting_at_symbol"
         android:text="@string/member_meeting_at"/>
     <EditText
         android:id="@+id/appointment_location"
         android:inputType="textEmailAddress"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
-        android:layout_marginTop="4dp"
-        android:layout_marginLeft="4dp"
-        android:layout_marginRight="4dp"
-        android:layout_marginBottom="4dp"
+        android:layout_centerHorizontal="true"
+        android:layout_below="@+id/appointment_meeting_at"
         android:fontFamily="sans-serif"
         android:hint="@string/appointment_location"/>
     <CheckBox
         android:id="@+id/appointment_is_completed"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
+        android:layout_centerHorizontal="true"
+        android:layout_below="@+id/appointment_location"
         android:checkMark="@null"
         android:text="@string/appointment_is_completed"/>
     <EditText
@@ -118,36 +132,37 @@
         android:layout_marginLeft="4dp"
         android:layout_marginRight="4dp"
         android:layout_marginBottom="8dp"
+        android:layout_below="@+id/appointment_is_completed"
         android:fontFamily="sans-serif"
         android:minLines="1"
         android:hint="@string/appointment_notes"/>
 
-    <LinearLayout
+    <Button
+        android:id="@+id/appointment_cancel"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
-        android:orientation="horizontal">
-        <Button
-            android:id="@+id/appointment_cancel"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:layout_marginLeft="4dp"
-            android:layout_marginRight="4dp"
-            android:layout_marginBottom="16dp"
-            android:background="@drawable/button"
-            android:textColor="@color/colorTextLight"
-            android:text="@string/appointment_cancel"/>
-        <Button
-            android:id="@+id/appointment_save"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:layout_marginLeft="4dp"
-            android:layout_marginRight="4dp"
-            android:layout_marginBottom="16dp"
-            android:background="@drawable/button"
-            android:textColor="@color/colorTextLight"
-            android:text="@string/appointment_save"/>
-    </LinearLayout>
-</LinearLayout>
+        android:layout_marginTop="4dp"
+        android:layout_marginLeft="4dp"
+        android:layout_marginRight="4dp"
+        android:layout_marginBottom="16dp"
+        android:layout_alignParentBottom="true"
+        android:layout_toLeftOf="@+id/appointment_save"
+        android:layout_toStartOf="@+id/appointment_save"
+        android:background="@drawable/button"
+        android:textColor="@color/colorTextLight"
+        android:text="@string/appointment_cancel"/>
+    <Button
+        android:id="@+id/appointment_save"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:layout_marginLeft="4dp"
+        android:layout_marginRight="4dp"
+        android:layout_marginBottom="16dp"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
+        android:background="@drawable/button"
+        android:textColor="@color/colorTextLight"
+        android:text="@string/appointment_save"/>
+</RelativeLayout>

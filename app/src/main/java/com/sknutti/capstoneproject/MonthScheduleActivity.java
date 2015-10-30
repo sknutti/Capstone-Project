@@ -2,8 +2,10 @@ package com.sknutti.capstoneproject;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.design.widget.FloatingActionButton;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -32,7 +34,13 @@ public class MonthScheduleActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         super.setContentView(R.layout.activity_month_schedule);
 
-        final SimpleDateFormat formatter = new SimpleDateFormat("dd MMM yyyy");
+        final SimpleDateFormat formatter = new SimpleDateFormat("MMM dd yyyy");
+
+        // set the current interview list as the default list
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+        if (preferences.getString(BaseActivity.PREF_CURRENT_INT_LIST, null) == null) {
+            preferences.edit().putString(BaseActivity.PREF_CURRENT_INT_LIST, "1").apply();
+        }
 
         caldroidFragment = new CaldroidFragment();
         // If Activity is created after rotation
@@ -64,42 +72,46 @@ public class MonthScheduleActivity extends BaseActivity {
                 Intent intent = new Intent(MonthScheduleActivity.this, DailyScheduleActivity.class);
                 intent.putExtra("selectedDay", formatter.format(date));
                 startActivity(intent);
-
-//                Toast.makeText(getApplicationContext(), formatter.format(date),
-//                        Toast.LENGTH_SHORT).show();
             }
 
             @Override
             public void onChangeMonth(int month, int year) {
-                mCurrentYear = year;
-                mCurrentMonth = month;
-                mCurrentMode = BaseActivity.DATE_MODE_MONTH;
+                if (month != mCurrentMonth && mCurrentMonth != 0) {
+                    mCurrentYear = year;
+                    mCurrentMonth = month;
+                    mCurrentMode = BaseActivity.DATE_MODE_MONTH;
 
-                monthChangeSubscription = Observable.create(new Observable.OnSubscribe<Cursor>() {
-                    @Override
-                    public void call(Subscriber<? super Cursor> observer) {
-                        try {
-                            createAppointmentLookupQuery(BaseActivity.DATE_MODE_MONTH, observer);
-                        } catch (Exception e) {
-                            observer.onError(e);
+                    monthChangeSubscription = Observable.create(new Observable.OnSubscribe<Cursor>() {
+                        @Override
+                        public void call(Subscriber<? super Cursor> observer) {
+                            try {
+                                createAppointmentLookupQuery(BaseActivity.DATE_MODE_MONTH, observer);
+                            } catch (Exception e) {
+                                observer.onError(e);
+                            }
                         }
-                    }
-                }).subscribe(new Subscriber<Cursor>() {
-                    @Override
-                    public void onNext(Cursor cursor) {
-                        updateCalendar(cursor);
-                    }
+                    }).subscribe(new Subscriber<Cursor>() {
+                        @Override
+                        public void onNext(Cursor cursor) {
+                            updateCalendar(cursor);
+                        }
 
-                    @Override
-                    public void onError(Throwable error) {
-                        System.err.println("Error: " + error.getMessage());
-                    }
+                        @Override
+                        public void onError(Throwable error) {
+                            System.err.println("Error: " + error.getMessage());
+                        }
 
-                    @Override
-                    public void onCompleted() {
-                        System.out.println("Sequence complete.");
-                    }
-                });
+                        @Override
+                        public void onCompleted() {
+                            System.out.println("Sequence complete.");
+                        }
+                    });
+                }
+                //this is to keep the observable from running on activity creation...
+                if (mCurrentMonth == 0) {
+                    mCurrentYear = year;
+                    mCurrentMonth = month;
+                }
             }
 
             @Override
@@ -162,10 +174,10 @@ public class MonthScheduleActivity extends BaseActivity {
 
     @Override
     public void onPause() {
-        if (!apptSubscription.isUnsubscribed()) {
+        if (apptSubscription != null && !apptSubscription.isUnsubscribed()) {
             apptSubscription.unsubscribe();
         }
-        if (!monthChangeSubscription.isUnsubscribed()) {
+        if (monthChangeSubscription != null && !monthChangeSubscription.isUnsubscribed()) {
             monthChangeSubscription.unsubscribe();
         }
         super.onPause();

@@ -112,7 +112,7 @@
     <string name="add_appointment">Add New Appointment</string>
     <string name="member_meeting_with">is meeting with</string>
     <string name="appointment_member">Select member</string>
-    <string name="appointment_interviewer">Select Interviewer</string>
+    <string name="appointment_interviewer">Select interviewer</string>
     <string name="member_meeting_on">on</string>
     <string name="member_meeting_at">at</string>
     <string name="appointment_notes">Notes</string>
@@ -127,4 +127,5 @@
     <string name="appointment_is_completed">Completed</string>
     <string name="title_activity_daily_schedule">DailyScheduleActivity</string>
     <string name="empty_daily_schedule">No Appointments Schedule for Today</string>
+    <string name="context_menu_mark_complete">Toggle Completed Flag</string>
 </resources>

@@ -30,6 +30,7 @@ import java.util.Date;
 import rx.Observable;
 import rx.Subscriber;
 import rx.Subscription;
+import timber.log.Timber;
 
 import static org.threeten.bp.temporal.TemporalAdjusters.firstDayOfMonth;
 import static org.threeten.bp.temporal.TemporalAdjusters.lastDayOfMonth;
@@ -45,6 +46,7 @@ public class BaseActivity extends AppCompatActivity implements NavigationView.On
     private Subscription apptSubscription;
     public static final String DATE_MODE_MONTH = "MONTH";
     public static final String DATE_MODE_DAY = "DAY";
+    public static final String PREF_CURRENT_INT_LIST = "currentInterviewList";
 
     private Toolbar mToolbar;
     private DrawerLayout mDrawerLayout;
@@ -105,35 +107,38 @@ public class BaseActivity extends AppCompatActivity implements NavigationView.On
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 //TODO: set current interviewer in shared prefs
                 String interviewer = mScheduleSpinner.getItemAtPosition(position).toString();
-                interviewerId = mScheduleSpinner.getSelectedItemId();
 
-                apptSubscription = Observable.create(new Observable.OnSubscribe<Cursor>() {
-                    @Override
-                    public void call(Subscriber<? super Cursor> observer) {
-                        try {
-                            createAppointmentLookupQuery(mCurrentMode, observer);
-                        } catch (Exception e) {
-                            observer.onError(e);
+                if (interviewerId != mScheduleSpinner.getSelectedItemId()) {
+                    interviewerId = mScheduleSpinner.getSelectedItemId();
+
+                    apptSubscription = Observable.create(new Observable.OnSubscribe<Cursor>() {
+                        @Override
+                        public void call(Subscriber<? super Cursor> observer) {
+                            try {
+                                createAppointmentLookupQuery(mCurrentMode, observer);
+                            } catch (Exception e) {
+                                observer.onError(e);
+                            }
                         }
-                    }
-                }).subscribe(new Subscriber<Cursor>() {
-                    @Override
-                    public void onNext(Cursor cursor) {
-                        updateCalendar(cursor);
-                    }
+                    }).subscribe(new Subscriber<Cursor>() {
+                        @Override
+                        public void onNext(Cursor cursor) {
+                            updateCalendar(cursor);
+                        }
 
-                    @Override
-                    public void onError(Throwable error) {
-                        System.err.println("Error: " + error.getMessage());
-                    }
+                        @Override
+                        public void onError(Throwable error) {
+                            System.err.println("Error: " + error.getMessage());
+                        }
 
-                    @Override
-                    public void onCompleted() {
-                        System.out.println("Completed the appointment lookup...");
-                    }
-                });
+                        @Override
+                        public void onCompleted() {
+                            System.out.println("Completed the appointment lookup...");
+                        }
+                    });
 
-                System.out.println("Interviewer: " + interviewer);
+                    System.out.println("Interviewer: " + interviewer);
+                }
             }
 
             @Override
@@ -158,7 +163,7 @@ public class BaseActivity extends AppCompatActivity implements NavigationView.On
 
     @Override
     public void onPause() {
-        if (!apptSubscription.isUnsubscribed()) {
+        if (apptSubscription != null && !apptSubscription.isUnsubscribed()) {
             apptSubscription.unsubscribe();
         }
         super.onPause();
@@ -248,8 +253,12 @@ public class BaseActivity extends AppCompatActivity implements NavigationView.On
             if (cursor.moveToFirst()) {
                 do {
                     long millis = cursor.getLong(cursor.getColumnIndex(SchedulerContract.AppointmentEntry.COLUMN_DATETIME));
-                    caldroidFragment.setTextColorForDate(R.color.colorTextHasAppts, new Date(millis));
-                    cursor.moveToNext();
+                    try {
+                        Date date = new Date(millis);
+                        caldroidFragment.setTextColorForDate(R.color.colorTextHasAppts, date);
+                    } catch (Exception e){
+                        Timber.w(e, "Error creating date for display on calendar - " + millis);
+                    }
                 } while (cursor.moveToNext());
                 caldroidFragment.refreshView();
             }

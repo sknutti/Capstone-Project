@@ -3,9 +3,11 @@ package com.sknutti.capstoneproject;
 import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.LoaderManager;
@@ -174,15 +176,12 @@ public class MemberListActivity extends AppCompatActivity implements LoaderManag
 
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-        String sortOrder = SchedulerContract.MemberEntry.COLUMN_NAME + " ASC";
-        Uri uri = SchedulerContract.MemberEntry.CONTENT_URI;
-
         return new CursorLoader(this,
-                uri,
+                SchedulerContract.MemberEntry.CONTENT_URI,
                 MEMBER_COLUMNS,
                 null,
                 null,
-                sortOrder);
+                SchedulerContract.MemberEntry.COLUMN_NAME + " ASC");
     }
 
     @Override
@@ -222,6 +221,17 @@ public class MemberListActivity extends AppCompatActivity implements LoaderManag
                     memberValues
             );
             long memberId = ContentUris.parseId(insertedUri);
+
+            //Add new member to current interview list
+            SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+            String interviewListId = preferences.getString(BaseActivity.PREF_CURRENT_INT_LIST, "1");
+            ContentValues milValues = new ContentValues();
+            milValues.put(SchedulerContract.MemberInterviewListEntry.COLUMN_MEMBER_KEY, memberId);
+            milValues.put(SchedulerContract.MemberInterviewListEntry.COLUMN_INTERVIEW_LIST_KEY, interviewListId);
+            Uri insertedUri2 = getContentResolver().insert(
+                    SchedulerContract.MemberInterviewListEntry.CONTENT_URI,
+                    milValues
+            );
         } else {
             int numUpdated = getContentResolver().update(
                     SchedulerContract.MemberEntry.CONTENT_URI,
@@ -232,16 +242,5 @@ public class MemberListActivity extends AppCompatActivity implements LoaderManag
         }
 
         getSupportLoaderManager().restartLoader(MEMBER_LIST_LOADER, null, this);
-    }
-
-    public static class RecyclerViewContextMenuInfo implements ContextMenu.ContextMenuInfo {
-
-        public RecyclerViewContextMenuInfo(int position, long id) {
-            this.position = position;
-            this.id = id;
-        }
-
-        final public int position;
-        final public long id;
     }
 }

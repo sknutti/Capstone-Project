@@ -2,7 +2,6 @@ package com.sknutti.capstoneproject;
 
 import android.content.ContentUris;
 import android.content.ContentValues;
-import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
@@ -19,6 +18,7 @@ import android.view.ContextMenu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Toast;
 
 import com.sknutti.capstoneproject.data.SchedulerContract;
 import com.sknutti.capstoneproject.dialogs.AddIntListDialogFragment;
@@ -117,33 +117,58 @@ public class InterviewListActivity extends AppCompatActivity implements LoaderMa
 
         Cursor cursor = mInterviewListAdapter.getCursor();
         cursor.moveToPosition(position);
-
-        Uri number;
-        Intent actionIntent;
-        String title = getResources().getString(R.string.chooser_title);
-        Intent chooser;
+        long id = cursor.getLong(COL_INT_LIST_ID);
 
         switch (item.getItemId()) {
             case R.id.menu_make_current_int_list:
                 Timber.d("Making interview list current");
-                number = Uri.parse(cursor.getString(MemberListActivity.COL_MOBILE));
-                actionIntent = new Intent(Intent.ACTION_DIAL, number);
-                chooser = Intent.createChooser(actionIntent, title);
-                // Verify the intent will resolve to at least one activity
-                if (actionIntent.resolveActivity(getPackageManager()) != null) {
-                    startActivity(chooser);
+                // Loop through list of interview lists and set is_current to false(0)
+                Cursor ilCursor = getContentResolver().query(
+                        SchedulerContract.InterviewListEntry.CONTENT_URI,
+                        InterviewListActivity.INTERVIEW_LIST_COLUMNS,
+                        null,
+                        null,
+                        SchedulerContract.InterviewListEntry.COLUMN_NAME + " ASC");
+                if (ilCursor != null && ilCursor.getCount() > 0) {
+                    if (ilCursor.moveToFirst()) {
+                        do {
+                            ContentValues milValues = new ContentValues();
+                            milValues.put(SchedulerContract.InterviewListEntry.COLUMN_IS_CURRENT_LIST, "0");
+                            getContentResolver().update(
+                                    SchedulerContract.InterviewListEntry.CONTENT_URI,
+                                    milValues,
+                                    SchedulerContract.InterviewListEntry.COLUMN_ID + " = ?",
+                                    new String[]{String.valueOf(ilCursor.getLong(COL_INT_LIST_ID))}
+                            );
+                        } while (ilCursor.moveToNext());
+                    }
+                    ilCursor.close();
                 }
+
+                // then set this list to current
+                ContentValues milValues = new ContentValues();
+                milValues.put(SchedulerContract.InterviewListEntry.COLUMN_IS_CURRENT_LIST, "1");
+                getContentResolver().update(
+                        SchedulerContract.InterviewListEntry.CONTENT_URI,
+                        milValues,
+                        SchedulerContract.InterviewListEntry.COLUMN_ID + " = ?",
+                        new String[]{String.valueOf(id)}
+                );
                 break;
             case R.id.menu_delete_int_list:
                 Timber.d("Deleting interview list");
-                //TODO:  need to check and see if this is the last list before deleting
-                long id = cursor.getLong(MemberListActivity.COL_MEMBER_ID);
-                getContentResolver().delete(
-                        SchedulerContract.MemberEntry.CONTENT_URI,
-                        SchedulerContract.MemberEntry.COLUMN_ID + " = ?",
-                        new String[]{String.valueOf(id)}
-                );
-                getSupportLoaderManager().restartLoader(INTERVIEW_LIST_LOADER, null, this);
+                if (id == 1) {
+                    Toast.makeText(getApplicationContext(),
+                            "Cannot delete the Current list",
+                            Toast.LENGTH_SHORT).show();
+                } else {
+                    getContentResolver().delete(
+                            SchedulerContract.InterviewListEntry.CONTENT_URI,
+                            SchedulerContract.InterviewListEntry.COLUMN_ID + " = ?",
+                            new String[]{String.valueOf(id)}
+                    );
+                    getSupportLoaderManager().restartLoader(INTERVIEW_LIST_LOADER, null, this);
+                }
                 break;
             default:
                 //TODO: display message to user
@@ -186,8 +211,29 @@ public class InterviewListActivity extends AppCompatActivity implements LoaderMa
         intListValues.put(SchedulerContract.InterviewListEntry.COLUMN_END_DATE, endDate);
         intListValues.put(SchedulerContract.InterviewListEntry.COLUMN_IS_CURRENT_LIST, isCurrentList ? 1 : 0);
 
+        // Loo[ through all interview lists and set to false if the new list is being set to the current list
         if (isCurrentList) {
-            //TODO: find a way to loop through all the lists and set the isCurrentList to false
+            Cursor cursor = getContentResolver().query(
+                    SchedulerContract.InterviewListEntry.CONTENT_URI,
+                    InterviewListActivity.INTERVIEW_LIST_COLUMNS,
+                    null,
+                    null,
+                    SchedulerContract.InterviewListEntry.COLUMN_NAME + " ASC");
+            if (cursor != null && cursor.getCount() > 0) {
+                if (cursor.moveToFirst()) {
+                    do {
+                        ContentValues milValues = new ContentValues();
+                        milValues.put(SchedulerContract.InterviewListEntry.COLUMN_IS_CURRENT_LIST, "0");
+                        getContentResolver().update(
+                                SchedulerContract.InterviewListEntry.CONTENT_URI,
+                                milValues,
+                                SchedulerContract.InterviewListEntry.COLUMN_ID + " = ?",
+                                new String[]{String.valueOf(cursor.getLong(COL_INT_LIST_ID))}
+                        );
+                    } while (cursor.moveToNext());
+                }
+                cursor.close();
+            }
         }
 
         if (action.equals("add")) {
@@ -195,7 +241,29 @@ public class InterviewListActivity extends AppCompatActivity implements LoaderMa
                     SchedulerContract.InterviewListEntry.CONTENT_URI,
                     intListValues
             );
-            long memberId = ContentUris.parseId(insertedUri);
+            long interviewListId = ContentUris.parseId(insertedUri);
+
+            // Add all members to this new interview list
+            Cursor cursor = getContentResolver().query(
+                    SchedulerContract.MemberEntry.CONTENT_URI,
+                    MemberListActivity.MEMBER_COLUMNS,
+                    null,
+                    null,
+                    SchedulerContract.MemberEntry.COLUMN_NAME + " ASC");
+            if (cursor != null && cursor.getCount() > 0) {
+                if (cursor.moveToFirst()) {
+                    do {
+                        ContentValues milValues = new ContentValues();
+                        milValues.put(SchedulerContract.MemberInterviewListEntry.COLUMN_MEMBER_KEY, cursor.getLong(MemberListActivity.COL_MEMBER_ID));
+                        milValues.put(SchedulerContract.MemberInterviewListEntry.COLUMN_INTERVIEW_LIST_KEY, interviewListId);
+                        Uri insertedUri2 = getContentResolver().insert(
+                                SchedulerContract.MemberInterviewListEntry.CONTENT_URI,
+                                milValues
+                        );
+                    } while (cursor.moveToNext());
+                }
+                cursor.close();
+            }
         } else {
             int numUpdated = getContentResolver().update(
                     SchedulerContract.InterviewListEntry.CONTENT_URI,
@@ -206,16 +274,5 @@ public class InterviewListActivity extends AppCompatActivity implements LoaderMa
         }
 
         getSupportLoaderManager().restartLoader(INTERVIEW_LIST_LOADER, null, this);
-    }
-
-    public static class RecyclerViewContextMenuInfo implements ContextMenu.ContextMenuInfo {
-
-        public RecyclerViewContextMenuInfo(int position, long id) {
-            this.position = position;
-            this.id = id;
-        }
-
-        final public int position;
-        final public long id;
     }
 }

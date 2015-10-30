@@ -1,5 +1,6 @@
 package com.sknutti.capstoneproject;
 
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
@@ -11,6 +12,7 @@ import android.widget.CheckBox;
 import android.widget.TextView;
 
 import com.jakewharton.rxbinding.view.RxView;
+import com.sknutti.capstoneproject.data.SchedulerContract;
 
 import org.threeten.bp.Instant;
 import org.threeten.bp.LocalDateTime;
@@ -37,12 +39,23 @@ public class AppointmentListAdapter extends RecyclerView.Adapter<AppointmentList
             mApptTime = (TextView) view.findViewById(R.id.list_item_appt_time);
             mCompleted = (CheckBox) view.findViewById(R.id.list_item_completed);
 
-            //TODO: add observer to updated completed flag on click
             RxView.clicks(view).subscribe(aVoid -> {
                 Intent intent = new Intent(mContext, AppointmentActivity.class);
                 mCursor.moveToPosition(getAdapterPosition());
                 intent.putExtra("selectedAppointment", mCursor.getString(AppointmentActivity.COL_APPT_ID));
                 mContext.startActivity(intent);
+            });
+            RxView.clicks(mCompleted).subscribe(aVoid -> {
+                ContentValues contentValues = new ContentValues();
+                long id = mCursor.getLong(AppointmentActivity.COL_I_APPT_ID);
+                int completed = mCursor.getInt(AppointmentActivity.COL_I_COMPLETED);
+                contentValues.put(SchedulerContract.AppointmentEntry.COLUMN_COMPLETED, (completed == 1) ? 0 : 1);
+                mContext.getContentResolver().update(
+                        SchedulerContract.AppointmentEntry.CONTENT_URI,
+                        contentValues,
+                        SchedulerContract.AppointmentEntry.COLUMN_ID + " = ?",
+                        new String[]{String.valueOf(id)}
+                );
             });
             RxView.longClicks(view).subscribe(aVoid -> {
                 setPosition(getAdapterPosition());

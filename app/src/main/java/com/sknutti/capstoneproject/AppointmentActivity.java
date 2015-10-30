@@ -4,13 +4,14 @@ import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
 import android.content.ContentValues;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v4.widget.SimpleCursorAdapter;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.DatePicker;
@@ -19,6 +20,8 @@ import android.widget.TextView;
 import android.widget.TimePicker;
 import android.widget.Toast;
 
+import com.f2prateek.rx.preferences.Preference;
+import com.f2prateek.rx.preferences.RxSharedPreferences;
 import com.jakewharton.rxbinding.view.RxView;
 import com.sknutti.capstoneproject.data.SchedulerContract;
 import com.sknutti.capstoneproject.dialogs.DatePickerFragment;
@@ -40,7 +43,7 @@ public class AppointmentActivity extends AppCompatActivity
                     TimePickerDialog.OnTimeSetListener {
 
     DateFormat dateFormat = new SimpleDateFormat("MMM dd yyyy", Locale.US);
-    DateFormat timeFormat = new SimpleDateFormat("h:mm a", Locale.US);
+    DateFormat timeFormat = new SimpleDateFormat("h:mma", Locale.US);
 
     private Subscription apptSubscription;
 
@@ -95,12 +98,7 @@ public class AppointmentActivity extends AppCompatActivity
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        toolbar.setNavigationOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                finish();
-            }
-        });
+        toolbar.setNavigationOnClickListener(v -> finish());
 
         TextView id = (TextView) findViewById(R.id.appointment_id);
         TextView interviewListId = (TextView) findViewById(R.id.appointment_int_list_id);
@@ -111,6 +109,11 @@ public class AppointmentActivity extends AppCompatActivity
         TextView location = (TextView) findViewById(R.id.appointment_location);
         TextView notes = (TextView) findViewById(R.id.appointment_notes);
         CheckBox completed = (CheckBox) findViewById(R.id.appointment_is_completed);
+
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+        RxSharedPreferences rxPreferences = RxSharedPreferences.create(preferences);
+        Preference<String> currentInterviewList = rxPreferences.getString(BaseActivity.PREF_CURRENT_INT_LIST);
+        currentInterviewList.asObservable().subscribe(intListId -> interviewListId.setText(intListId));
 
         Cursor memberCursor = getContentResolver().query(
                 SchedulerContract.MemberEntry.CONTENT_URI,
@@ -170,9 +173,10 @@ public class AppointmentActivity extends AppCompatActivity
                     String dateTimeString = datePicker.getText().toString() + " " + timePicker.getText().toString();
 
                     long dateTime = 0L;
+                    Date tempDate = new Date(System.currentTimeMillis());
                     try {
                         SimpleDateFormat f = new SimpleDateFormat("MMM dd yyyy h:mma");
-                        Date tempDate = f.parse(dateTimeString);
+                        tempDate = f.parse(dateTimeString);
                         dateTime = tempDate.getTime();
                     } catch (ParseException e) {
                         e.printStackTrace();
@@ -216,63 +220,80 @@ public class AppointmentActivity extends AppCompatActivity
                         Toast.makeText(this, "Saved Appointment Successfully!", Toast.LENGTH_SHORT).show();
                     }
 
-                    Intent intent = new Intent(AppointmentActivity.this, MonthScheduleActivity.class);
+                    Intent intent;
+                    if (getIntent().getStringExtra("currentDate") != null || getIntent().getStringExtra("selectedAppointment") != null) {
+                        intent = new Intent(this, DailyScheduleActivity.class);
+                        intent.putExtra("selectedDay", dateFormat.format(tempDate));
+                    } else {
+                        intent = new Intent(this, MonthScheduleActivity.class);
+                    }
                     startActivity(intent);
                 })
                 .subscribe();
 
         Bundle extras = getIntent().getExtras();
         if (extras != null) {
-            long selectedAppointmentId = Long.parseLong(extras.getString("selectedAppointment"));
-            toolbar.setTitle("Edit Appointment");
-            apptSubscription = Observable.create(new Observable.OnSubscribe<Cursor>() {
-                @Override
-                public void call(Subscriber<? super Cursor> observer) {
-                    try {
-                        if (!observer.isUnsubscribed()) {
-                            Cursor apptCursor = getContentResolver().query(
-                                    SchedulerContract.AppointmentEntry.buildAppointmentUri(selectedAppointmentId),
-                                    AppointmentActivity.INDIVIDUAL_APPOINTMENT_COLUMNS,
-                                    SchedulerContract.AppointmentEntry.COLUMN_ID + " = ?",
-                                    new String[]{String.valueOf(selectedAppointmentId)},
-                                    SchedulerContract.AppointmentEntry.COLUMN_DATETIME + " ASC"
-                            );
-                            observer.onNext(apptCursor);
-                            observer.onCompleted();
+            if (extras.getString("selectedAppointment") != null) {
+                long selectedAppointmentId = Long.parseLong(extras.getString("selectedAppointment"));
+                toolbar.setTitle("Edit Appointment");
+                apptSubscription = Observable.create(new Observable.OnSubscribe<Cursor>() {
+                    @Override
+                    public void call(Subscriber<? super Cursor> observer) {
+                        try {
+                            if (!observer.isUnsubscribed()) {
+                                Cursor apptCursor = getContentResolver().query(
+                                        SchedulerContract.AppointmentEntry.buildAppointmentUri(selectedAppointmentId),
+                                        AppointmentActivity.INDIVIDUAL_APPOINTMENT_COLUMNS,
+                                        SchedulerContract.AppointmentEntry.COLUMN_ID + " = ?",
+                                        new String[]{String.valueOf(selectedAppointmentId)},
+                                        SchedulerContract.AppointmentEntry.COLUMN_DATETIME + " ASC"
+                                );
+                                observer.onNext(apptCursor);
+                                observer.onCompleted();
+                            }
+                        } catch (Exception e) {
+                            observer.onError(e);
                         }
-                    } catch (Exception e) {
-                        observer.onError(e);
                     }
-                }
-            }).subscribe(new Subscriber<Cursor>() {
-                @Override
-                public void onNext(Cursor cursor) {
-                    if (cursor != null) {
-                        if (cursor.moveToFirst()) {
-                            id.setText(cursor.getString(COL_I_APPT_ID));
-                            interviewListId.setText(cursor.getString(COL_I_INTERVIEW_LIST_KEY));
-                            Utility.selectSpinnerItemByValue(memberSpinner, cursor.getLong(COL_I_MEMBER_KEY));
-                            Utility.selectSpinnerItemByValue(interviewerSpinner, cursor.getLong(COL_I_INTERVIEWER_KEY));
-                            datePicker.setText(dateFormat.format(new Date(cursor.getLong(COL_I_DATETIME))));
-                            timePicker.setText(timeFormat.format(new Date(cursor.getLong(COL_I_DATETIME))));
-                            location.setText(cursor.getString(COL_I_LOCATION));
-                            completed.setChecked(cursor.getInt(COL_I_COMPLETED) == 1);
-                            notes.setText(cursor.getString(COL_I_NOTES));
+                }).subscribe(new Subscriber<Cursor>() {
+                    @Override
+                    public void onNext(Cursor cursor) {
+                        if (cursor != null) {
+                            if (cursor.moveToFirst()) {
+                                id.setText(cursor.getString(COL_I_APPT_ID));
+                                interviewListId.setText(cursor.getString(COL_I_INTERVIEW_LIST_KEY));
+                                Utility.selectSpinnerItemByValue(memberSpinner, cursor.getLong(COL_I_MEMBER_KEY));
+                                Utility.selectSpinnerItemByValue(interviewerSpinner, cursor.getLong(COL_I_INTERVIEWER_KEY));
+                                datePicker.setText(dateFormat.format(new Date(cursor.getLong(COL_I_DATETIME))));
+                                timePicker.setText(timeFormat.format(new Date(cursor.getLong(COL_I_DATETIME))));
+                                location.setText(cursor.getString(COL_I_LOCATION));
+                                completed.setChecked(cursor.getInt(COL_I_COMPLETED) == 1);
+                                notes.setText(cursor.getString(COL_I_NOTES));
+                            }
+                            cursor.close();
                         }
-                        cursor.close();
                     }
+
+                    @Override
+                    public void onError(Throwable error) {
+                        System.err.println("Error: " + error.getMessage());
+                    }
+
+                    @Override
+                    public void onCompleted() {
+                        System.out.println("Completed the appointment lookup...");
+                    }
+                });
+            } else if (extras.getString("currentDate") != null) {
+                try {
+                    Date currentDate = dateFormat.parse(extras.getString("currentDate"));
+                    datePicker.setText(dateFormat.format(currentDate));
+                    timePicker.setText(timeFormat.format(currentDate));
+                } catch (ParseException e) {
+                    Timber.w(e, "Error parsing date when opening daily schedule");
                 }
 
-                @Override
-                public void onError(Throwable error) {
-                    System.err.println("Error: " + error.getMessage());
-                }
-
-                @Override
-                public void onCompleted() {
-                    System.out.println("Completed the appointment lookup...");
-                }
-            });
+            }
         } else {
             datePicker.setText(dateFormat.format(new Date(System.currentTimeMillis())));
             timePicker.setText(timeFormat.format(new Date(System.currentTimeMillis())));
@@ -295,7 +316,7 @@ public class AppointmentActivity extends AppCompatActivity
 
     @Override
     public void onPause() {
-        if (!apptSubscription.isUnsubscribed()) {
+        if (apptSubscription != null && !apptSubscription.isUnsubscribed()) {
             apptSubscription.unsubscribe();
         }
         super.onPause();

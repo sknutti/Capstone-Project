@@ -139,7 +139,7 @@ public class SchedulerContract {
         // Foreign key to the interviewer
         public static final String COLUMN_INTERVIEWER_KEY = "interviewer_id";
         // Flag to mark if the interview was completed
-        public static final String COLUMN_COMPLETED = "location_id";
+        public static final String COLUMN_COMPLETED = "completed";
         // DateTime, stored as string
         public static final String COLUMN_DATETIME = "date_time";
         // The location of the interview
