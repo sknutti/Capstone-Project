@@ -1,8 +1,11 @@
 package com.sknutti.capstoneproject;
 
 import android.app.Application;
+import android.util.Log;
 
 import com.jakewharton.threetenabp.AndroidThreeTen;
+
+import timber.log.Timber;
 
 public class InterviewSchedulerApp extends Application {
 
@@ -19,15 +22,15 @@ public class InterviewSchedulerApp extends Application {
         return;
       }
 
-      FakeCrashLibrary.log(priority, tag, message);
-
-      if (t != null) {
-        if (priority == Log.ERROR) {
-          FakeCrashLibrary.logError(t);
-        } else if (priority == Log.WARN) {
-          FakeCrashLibrary.logWarning(t);
-        }
-      }
+//      FakeCrashLibrary.log(priority, tag, message);
+//
+//      if (t != null) {
+//        if (priority == Log.ERROR) {
+//          FakeCrashLibrary.logError(t);
+//        } else if (priority == Log.WARN) {
+//          FakeCrashLibrary.logWarning(t);
+//        }
+//      }
     }
   }
 
