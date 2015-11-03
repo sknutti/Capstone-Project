@@ -14,7 +14,7 @@
         android:paddingTop="@dimen/nav_header_vertical_spacing"
         android:paddingEnd="@dimen/nav_header_vertical_spacing"
         android:paddingRight="@dimen/nav_header_vertical_spacing"
-        android:src="@android:drawable/sym_def_app_icon" android:id="@+id/imageView"
+        android:src="@drawable/app_icon" android:id="@+id/imageView"
         android:contentDescription="User Icon" />
 
 
@@ -28,17 +28,10 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:paddingTop="@dimen/nav_header_vertical_spacing"
-            android:text="@string/current_interview_list_name"
+            android:text="@string/app_name"
             android:textColor="@color/colorTextLight"
+            android:textSize="18sp"
             android:textAppearance="@style/TextAppearance.AppCompat.Body1" />
-
-        <TextView
-            android:id="@+id/int_list_date_range"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textColor="@color/colorTextLight"
-            android:text="@string/current_interview_list_date_range"
-            android:textSize="12sp"/>
     </LinearLayout>
 
 </LinearLayout>

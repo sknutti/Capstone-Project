@@ -211,7 +211,7 @@ public class InterviewListActivity extends AppCompatActivity implements LoaderMa
         intListValues.put(SchedulerContract.InterviewListEntry.COLUMN_END_DATE, endDate);
         intListValues.put(SchedulerContract.InterviewListEntry.COLUMN_IS_CURRENT_LIST, isCurrentList ? 1 : 0);
 
-        // Loo[ through all interview lists and set to false if the new list is being set to the current list
+        // Loop through all interview lists and set to false if the new list is being set to the current list
         if (isCurrentList) {
             Cursor cursor = getContentResolver().query(
                     SchedulerContract.InterviewListEntry.CONTENT_URI,

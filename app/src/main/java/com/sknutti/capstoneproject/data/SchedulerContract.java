@@ -158,6 +158,10 @@ public class SchedulerContract {
                     .appendPath("int").appendPath(Long.toString(interviewer)).build();
         }
 
+        public static Uri buildAppointmentByWeekAndInterviewer(long date, long interviewer) {
+            return CONTENT_URI.buildUpon().appendPath("week").appendPath(Long.toString(date))
+                    .appendPath("int").appendPath(Long.toString(interviewer)).build();
+        }
 
         public static Uri buildAppointmentByDayAndInterviewer(long date, long interviewer) {
             return CONTENT_URI.buildUpon().appendPath("day").appendPath(Long.toString(date))

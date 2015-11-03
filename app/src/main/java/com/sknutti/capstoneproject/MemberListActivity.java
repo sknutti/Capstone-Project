@@ -187,7 +187,6 @@ public class MemberListActivity extends AppCompatActivity implements LoaderManag
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
         mMemberListAdapter.swapCursor(data);
-//        updateEmptyView();
     }
 
     @Override

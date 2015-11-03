@@ -73,6 +73,10 @@
         android:layout_toLeftOf="@+id/appointment_meeting_at_symbol"
         android:layout_toStartOf="@+id/appointment_meeting_at_symbol"
         android:textColor="@color/colorTextDark"
+        android:textSize="15sp"
+        android:drawableRight="@drawable/ic_today_black_24dp"
+        android:drawableEnd="@drawable/ic_today_black_24dp"
+        android:drawablePadding="4dp"
         android:hint="@string/appointment_date"/>
     <TextView
         android:id="@+id/appointment_meeting_at_symbol"
@@ -95,6 +99,10 @@
         android:layout_toRightOf="@+id/appointment_meeting_at_symbol"
         android:layout_toEndOf="@+id/appointment_meeting_at_symbol"
         android:textColor="@color/colorTextDark"
+        android:textSize="15sp"
+        android:drawableRight="@drawable/ic_access_time_black_24dp"
+        android:drawableEnd="@drawable/ic_access_time_black_24dp"
+        android:drawablePadding="3dp"
         android:hint="@string/appointment_time"/>
 
     <TextView
@@ -113,6 +121,7 @@
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
         android:layout_below="@+id/appointment_meeting_at"
+        android:background="@android:color/transparent"
         android:fontFamily="sans-serif"
         android:hint="@string/appointment_location"/>
     <CheckBox
@@ -121,6 +130,8 @@
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
         android:layout_below="@+id/appointment_location"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="16dp"
         android:checkMark="@null"
         android:text="@string/appointment_is_completed"/>
     <EditText
@@ -133,6 +144,7 @@
         android:layout_marginRight="4dp"
         android:layout_marginBottom="8dp"
         android:layout_below="@+id/appointment_is_completed"
+        android:background="@android:color/transparent"
         android:fontFamily="sans-serif"
         android:minLines="1"
         android:hint="@string/appointment_notes"/>

@@ -3,9 +3,10 @@ package com.sknutti.capstoneproject;
 import android.annotation.SuppressLint;
 import android.content.ContentValues;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
-import android.net.Uri;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
@@ -16,6 +17,8 @@ import android.view.ContextMenu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.Spinner;
 import android.widget.TextView;
 
 import com.sknutti.capstoneproject.data.SchedulerContract;
@@ -24,31 +27,24 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-import rx.Subscription;
 import timber.log.Timber;
 
 @SuppressLint("SimpleDateFormat")
 public class DailyScheduleActivity extends BaseActivity implements LoaderManager.LoaderCallbacks<Cursor> {
-    private Subscription apptSubscription;
-    private Subscription dayChangeSubscription;
-    final SimpleDateFormat formatter = new SimpleDateFormat("MMM dd yyyy");
+    public static final SimpleDateFormat formatter = new SimpleDateFormat("MMM dd yyyy");
 
-    private static final int APPOINTMENT_LIST_LOADER = 0;
+    public static final int APPOINTMENT_LIST_LOADER = 0;
 
     private RecyclerView mRecyclerView;
     private AppointmentListAdapter mAdapter;
     private Date mCurrentDate;
 
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_daily_schedule);
-//        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-//        setSupportActionBar(toolbar);
-//        ActionBar actionBar = getSupportActionBar();
-//        actionBar.setDisplayShowTitleEnabled(false);
-//        actionBar.setDisplayHomeAsUpEnabled(true);
-//        toolbar.setNavigationOnClickListener(v -> finish());
+
         try {
             mCurrentDate = formatter.parse(getIntent().getStringExtra("selectedDay"));
         } catch (ParseException e) {
@@ -67,6 +63,23 @@ public class DailyScheduleActivity extends BaseActivity implements LoaderManager
 
         registerForContextMenu(mRecyclerView);
 
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+        Spinner mScheduleSpinner = (Spinner) findViewById(R.id.spinner_toolbar);
+        mScheduleSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                interviewerId = mScheduleSpinner.getSelectedItemId();
+                preferences.edit().putLong(BaseActivity.PREF_CURRENT_INTERVIEWER, mScheduleSpinner.getSelectedItemId()).apply();
+                getSupportLoaderManager().restartLoader(APPOINTMENT_LIST_LOADER, null, DailyScheduleActivity.this);
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+            }
+        });
+        Utility.updateInterviewerSpinner(this, mScheduleSpinner);
+        Utility.selectSpinnerItemByValue(mScheduleSpinner, preferences.getLong(PREF_CURRENT_INTERVIEWER, 0));
+
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(view -> {
             Intent intent = new Intent(this, AppointmentActivity.class);
@@ -78,45 +91,18 @@ public class DailyScheduleActivity extends BaseActivity implements LoaderManager
         getSupportLoaderManager().initLoader(APPOINTMENT_LIST_LOADER, null, this);
     }
 
+    public void goBack(View view) {
+        Intent intent = new Intent(this, MonthScheduleActivity.class);
+        startActivity(intent);
+    }
+
     @Override
     public void onResume() {
         super.onResume();
-
-//        apptSubscription = Observable.create(new Observable.OnSubscribe<Cursor>() {
-//            @Override
-//            public void call(Subscriber<? super Cursor> observer) {
-//                try {
-//                    createAppointmentLookupQuery(BaseActivity.DATE_MODE_DAY, observer);
-//                } catch (Exception e) {
-//                    observer.onError(e);
-//                }
-//            }
-//        }).subscribe(new Subscriber<Cursor>() {
-//            @Override
-//            public void onNext(Cursor cursor) {
-//                updateDailySchedule(cursor);
-//            }
-//
-//            @Override
-//            public void onError(Throwable error) {
-//                System.err.println("Error: " + error.getMessage());
-//            }
-//
-//            @Override
-//            public void onCompleted() {
-//                System.out.println("Completed the appointment lookup...");
-//            }
-//        });
     }
 
     @Override
     public void onPause() {
-//        if (!apptSubscription.isUnsubscribed()) {
-//            apptSubscription.unsubscribe();
-//        }
-//        if (!dayChangeSubscription.isUnsubscribed()) {
-//            dayChangeSubscription.unsubscribe();
-//        }
         super.onPause();
     }
 
@@ -185,15 +171,12 @@ public class DailyScheduleActivity extends BaseActivity implements LoaderManager
 
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-        String sortOrder = SchedulerContract.AppointmentEntry.COLUMN_DATETIME + " ASC";
-        Uri uri = SchedulerContract.AppointmentEntry.buildAppointmentByDayAndInterviewer(mCurrentDate.getTime(), interviewerId);
-
         return new CursorLoader(this,
-                uri,
+                SchedulerContract.AppointmentEntry.buildAppointmentByDayAndInterviewer(mCurrentDate.getTime(), interviewerId),
                 AppointmentActivity.APPOINTMENT_COLUMNS,
                 null,
                 null,
-                sortOrder);
+                SchedulerContract.AppointmentEntry.COLUMN_DATETIME + " ASC");
     }
 
     @Override

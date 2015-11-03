@@ -7,9 +7,9 @@ import android.database.Cursor;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.design.widget.FloatingActionButton;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.Spinner;
 import android.widget.Toast;
 
 import com.roomorama.caldroid.CaldroidFragment;
@@ -22,12 +22,16 @@ import java.util.Date;
 import rx.Observable;
 import rx.Subscriber;
 import rx.Subscription;
+import rx.android.schedulers.AndroidSchedulers;
+import rx.schedulers.Schedulers;
 
 @SuppressLint("SimpleDateFormat")
 public class MonthScheduleActivity extends BaseActivity {
 
     private Subscription apptSubscription;
     private Subscription monthChangeSubscription;
+    private SharedPreferences preferences;
+    private Spinner mScheduleSpinner;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,7 +41,7 @@ public class MonthScheduleActivity extends BaseActivity {
         final SimpleDateFormat formatter = new SimpleDateFormat("MMM dd yyyy");
 
         // set the current interview list as the default list
-        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+        preferences = PreferenceManager.getDefaultSharedPreferences(this);
         if (preferences.getString(BaseActivity.PREF_CURRENT_INT_LIST, null) == null) {
             preferences.edit().putString(BaseActivity.PREF_CURRENT_INT_LIST, "1").apply();
         }
@@ -90,7 +94,10 @@ public class MonthScheduleActivity extends BaseActivity {
                                 observer.onError(e);
                             }
                         }
-                    }).subscribe(new Subscriber<Cursor>() {
+                    })
+                    .subscribeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(new Subscriber<Cursor>() {
                         @Override
                         public void onNext(Cursor cursor) {
                             updateCalendar(cursor);
@@ -123,16 +130,32 @@ public class MonthScheduleActivity extends BaseActivity {
 
             @Override
             public void onCaldroidViewCreated() {
-                if (caldroidFragment.getLeftArrowButton() != null) {
+//                if (caldroidFragment.getLeftArrowButton() != null) {
 //                    Toast.makeText(getApplicationContext(),
 //                            "Caldroid view is created", Toast.LENGTH_SHORT)
 //                            .show();
-                }
+//                }
             }
         };
 
         // Setup Caldroid
         caldroidFragment.setCaldroidListener(listener);
+
+        mScheduleSpinner = (Spinner) findViewById(R.id.spinner_toolbar);
+        mScheduleSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                preferences.edit().putLong(BaseActivity.PREF_CURRENT_INTERVIEWER, mScheduleSpinner.getSelectedItemId()).apply();
+                interviewerId = mScheduleSpinner.getSelectedItemId();
+                refreshCalendar();
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+
+            }
+        });
+
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(view -> {
@@ -145,31 +168,9 @@ public class MonthScheduleActivity extends BaseActivity {
     public void onResume() {
         super.onResume();
 
-        apptSubscription = Observable.create(new Observable.OnSubscribe<Cursor>() {
-            @Override
-            public void call(Subscriber<? super Cursor> observer) {
-                try {
-                    createAppointmentLookupQuery(BaseActivity.DATE_MODE_MONTH, observer);
-                } catch (Exception e) {
-                    observer.onError(e);
-                }
-            }
-        }).subscribe(new Subscriber<Cursor>() {
-            @Override
-            public void onNext(Cursor cursor) {
-                updateCalendar(cursor);
-            }
-
-            @Override
-            public void onError(Throwable error) {
-                System.err.println("Error: " + error.getMessage());
-            }
-
-            @Override
-            public void onCompleted() {
-                System.out.println("Completed the appointment lookup...");
-            }
-        });
+        Utility.updateInterviewerSpinner(this, mScheduleSpinner);
+        Utility.selectSpinnerItemByValue(mScheduleSpinner, preferences.getLong(PREF_CURRENT_INTERVIEWER, 0));
+        refreshCalendar();
     }
 
     @Override
@@ -184,28 +185,6 @@ public class MonthScheduleActivity extends BaseActivity {
     }
 
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.month_schedule, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
-
-        return super.onOptionsItemSelected(item);
-    }
-
-    @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
 
@@ -213,4 +192,36 @@ public class MonthScheduleActivity extends BaseActivity {
             caldroidFragment.saveStatesToKey(outState, "CALDROID_SAVED_STATE");
         }
     }
+
+    private void refreshCalendar() {
+        apptSubscription = Observable.create(new Observable.OnSubscribe<Cursor>() {
+            @Override
+            public void call(Subscriber<? super Cursor> observer) {
+                try {
+                    createAppointmentLookupQuery(BaseActivity.DATE_MODE_MONTH, observer);
+                } catch (Exception e) {
+                    observer.onError(e);
+                }
+            }
+        })
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Subscriber<Cursor>() {
+                    @Override
+                    public void onNext(Cursor cursor) {
+                        updateCalendar(cursor);
+                    }
+
+                    @Override
+                    public void onError(Throwable error) {
+                        System.err.println("Error: " + error.getMessage());
+                    }
+
+                    @Override
+                    public void onCompleted() {
+                        System.out.println("Completed the appointment lookup...");
+                    }
+        });
+    }
+
 }

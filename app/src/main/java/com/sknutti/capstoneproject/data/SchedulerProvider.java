@@ -10,6 +10,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteQueryBuilder;
 import android.net.Uri;
 
+import org.threeten.bp.DayOfWeek;
 import org.threeten.bp.Instant;
 import org.threeten.bp.LocalDateTime;
 import org.threeten.bp.ZoneId;
@@ -27,7 +28,8 @@ public class SchedulerProvider extends ContentProvider{
     static final int APPOINTMENT = 100;
     static final int APPOINTMENT_BY_ID = 101;
     static final int APPOINTMENT_BY_MONTH_AND_INTERVIEWER = 102;
-    static final int APPOINTMENT_BY_DAY_AND_INTERVIEWER = 103;
+    static final int APPOINTMENT_BY_WEEK_AND_INTERVIEWER = 103;
+    static final int APPOINTMENT_BY_DAY_AND_INTERVIEWER = 104;
     static final int INTERVIEW_LIST = 200;
     static final int MEMBER = 300;
     static final int MEMBER_IS_INTERVIEWER = 301;
@@ -135,6 +137,42 @@ public class SchedulerProvider extends ContentProvider{
         );
     }
 
+    private Cursor getAppointmentByWeekAndInterviewer(Uri uri, String[] projection, String sortOrder) {
+        String interviewer = SchedulerContract.AppointmentEntry.getInterviewerFromUri(uri);
+        String date = SchedulerContract.AppointmentEntry.getDateFromUri(uri);
+
+        Instant instant = Instant.ofEpochMilli(Long.parseLong(date));
+        LocalDateTime initial = instant.atZone(ZoneId.systemDefault()).toLocalDateTime();
+        long start = initial.with(DayOfWeek.SUNDAY).minusDays(7).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+        long end;
+        if (initial.getDayOfWeek().compareTo(DayOfWeek.WEDNESDAY) <= 0) {
+            end = initial.with(DayOfWeek.SATURDAY).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+        } else {
+            end = initial.with(DayOfWeek.SATURDAY).plusDays(7).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+        }
+
+
+        String[] selectionArgs;
+        String selection;
+
+        if (Integer.parseInt(interviewer) == 0) {
+            selection = sAppointmentByDateSelection;
+            selectionArgs = new String[]{String.valueOf(start), String.valueOf(end)};
+        } else {
+            selectionArgs = new String[]{String.valueOf(start), String.valueOf(end), interviewer};
+            selection = sAppointmentByDateAndInterviewerSelection;
+        }
+
+        return sAppointmentQueryBuilder.query(mOpenHelper.getReadableDatabase(),
+                projection,
+                selection,
+                selectionArgs,
+                null,
+                null,
+                sortOrder
+        );
+    }
+
     private Cursor getAppointmentByDayAndInterviewer(Uri uri, String[] projection, String sortOrder) {
         String interviewer = SchedulerContract.AppointmentEntry.getInterviewerFromUri(uri);
         String date = SchedulerContract.AppointmentEntry.getDateFromUri(uri);
@@ -186,6 +224,7 @@ public class SchedulerProvider extends ContentProvider{
         matcher.addURI(authority, SchedulerContract.PATH_APPOINTMENT, APPOINTMENT);
         matcher.addURI(authority, SchedulerContract.PATH_APPOINTMENT + "/#", APPOINTMENT_BY_ID);
         matcher.addURI(authority, SchedulerContract.PATH_APPOINTMENT + "/month/*/int/*", APPOINTMENT_BY_MONTH_AND_INTERVIEWER);
+        matcher.addURI(authority, SchedulerContract.PATH_APPOINTMENT + "/week/*/int/*", APPOINTMENT_BY_WEEK_AND_INTERVIEWER);
         matcher.addURI(authority, SchedulerContract.PATH_APPOINTMENT + "/day/*/int/*", APPOINTMENT_BY_DAY_AND_INTERVIEWER);
         matcher.addURI(authority, SchedulerContract.PATH_INT_LIST, INTERVIEW_LIST);
         matcher.addURI(authority, SchedulerContract.PATH_MEMBER, MEMBER);
@@ -207,6 +246,8 @@ public class SchedulerProvider extends ContentProvider{
 
         switch (match) {
             case APPOINTMENT_BY_MONTH_AND_INTERVIEWER:
+                return SchedulerContract.AppointmentEntry.CONTENT_TYPE;
+            case APPOINTMENT_BY_WEEK_AND_INTERVIEWER:
                 return SchedulerContract.AppointmentEntry.CONTENT_TYPE;
             case APPOINTMENT_BY_DAY_AND_INTERVIEWER:
                 return SchedulerContract.AppointmentEntry.CONTENT_TYPE;
@@ -239,6 +280,10 @@ public class SchedulerProvider extends ContentProvider{
             // "appointment/month/*/int/*"
             case APPOINTMENT_BY_MONTH_AND_INTERVIEWER:
                 retCursor = getAppointmentByMonthAndInterviewer(uri, projection, sortOrder);
+                break;
+            // "appointment/week/*/int/*"
+            case APPOINTMENT_BY_WEEK_AND_INTERVIEWER:
+                retCursor = getAppointmentByWeekAndInterviewer(uri, projection, sortOrder);
                 break;
             // "appointment/day/*/int/*"
             case APPOINTMENT_BY_DAY_AND_INTERVIEWER:
