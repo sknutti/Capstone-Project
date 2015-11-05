@@ -9,4 +9,5 @@
     <dimen name="app_bar_height">180dp</dimen>
     <dimen name="text_margin">16dp</dimen>
     <dimen name="list_item_extra_padding">0dp</dimen>
+    <dimen name="widget_margin">8dp</dimen>
 </resources>

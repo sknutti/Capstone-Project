@@ -203,6 +203,17 @@ public class SchedulerProvider extends ContentProvider{
         );
     }
 
+    private Cursor getAppointments(Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder) {
+        return sAppointmentQueryBuilder.query(mOpenHelper.getReadableDatabase(),
+                projection,
+                selection,
+                selectionArgs,
+                null,
+                null,
+                sortOrder
+        );
+    }
+
     private Cursor getMemberByInterviewList(Uri uri, String[] projection, String sortOrder) {
         String interviewListId = SchedulerContract.MemberInterviewListEntry.getInterviewListFromUri(uri);
 
@@ -303,15 +314,7 @@ public class SchedulerProvider extends ContentProvider{
                 break;
             // appointment
             case APPOINTMENT:
-                retCursor = mOpenHelper.getReadableDatabase().query(
-                        SchedulerContract.AppointmentEntry.TABLE_NAME,
-                        projection,
-                        selection,
-                        selectionArgs,
-                        null,
-                        null,
-                        sortOrder
-                );
+                retCursor = getAppointments(uri, projection, selection, selectionArgs, sortOrder);
                 break;
             // interview_list
             case INTERVIEW_LIST:

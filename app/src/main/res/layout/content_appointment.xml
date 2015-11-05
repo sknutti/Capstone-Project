@@ -162,7 +162,8 @@
         android:layout_toStartOf="@+id/appointment_save"
         android:background="@drawable/button"
         android:textColor="@color/colorTextLight"
-        android:text="@string/appointment_cancel"/>
+        android:text="@string/appointment_cancel"
+        android:contentDescription="@string/appointment_cancel"/>
     <Button
         android:id="@+id/appointment_save"
         android:layout_width="wrap_content"
@@ -176,5 +177,6 @@
         android:layout_alignParentEnd="true"
         android:background="@drawable/button"
         android:textColor="@color/colorTextLight"
-        android:text="@string/appointment_save"/>
+        android:text="@string/appointment_save"
+        android:contentDescription="@string/appointment_save"/>
 </RelativeLayout>

@@ -129,4 +129,6 @@
     <string name="empty_daily_schedule">No Appointments Schedule for Today</string>
     <string name="context_menu_mark_complete">Toggle Completed Flag</string>
     <string name="next_appointment_header">Next Appointment</string>
+    <string name="widget_header">Upcoming Appointments</string>
+    <string name="widget_empty_view">No Appointments Set</string>
 </resources>
